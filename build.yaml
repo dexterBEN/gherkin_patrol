@@ -1,0 +1,14 @@
+targets:
+  $default:
+    builders:
+      gherkin_patrol|step_builder:
+        enabled: true
+
+builders:
+  step_builder:
+    import: "package:gherkin_patrol/src/builder/step_builder.dart"
+    builder_factories: ["stepBuilder"]
+    build_extensions: {".dart": [".bdd.g.dart"]}
+    auto_apply: dependents
+    build_to: source
+    applies_builders: ["source_gen|combining_builder"]
