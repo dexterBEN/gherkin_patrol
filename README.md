@@ -14,6 +14,95 @@ It is intentionally small and opinionated: not a full Gherkin runtime, but a foc
 
 ## How it works
 
+### Architecture overview
+
+```text
+                                  (consumer app)
++----------------------------------------------------------------------------+
+| .feature files (gherkin text)                                              |
+| e.g. integration_test/features/*.feature                                   |
++-------------------------------+--------------------------------------------+
+                                |
+                                | runtime
+                                v
+                  gherkin_runner_test.dart (Patrol)
+                  ---------------------------------
+                  - imports: gherkin_patrol
+                  - imports: bdd/steps_registry.dart
+                  - calls: runFeatureFile(path, $, steps)
+                                |
+                                v
+                        steps_registry.dart (app)
+                        -------------------------
+                        final steps = combineSteps([
+                          file1.generatedSteps,
+                          file2.generatedSteps,
+                          ...
+                        ]);
+                                ^
+                                |
+                                | build-time (codegen)
++-------------------------------+--------------------------------------------+
+| steps file(s) in app                                                       |
+| e.g. bdd/overview_steps.dart                                               |
+|                                                                            |
+| part 'overview_steps.bdd.g.dart';                                          |
+|                                                                            |
+| @Given("I am on the overview page")                                        |
+| @When('I enter "{email}"')                                                 |
+| @Then('I see "{screen}"')                                                  |
+| @When('^REGEX:^I tap (.+)$')   // optional raw regex                       |
++-------------------------------+--------------------------------------------+
+                                |
+                                v
+                     generated part files (*.bdd.g.dart)
+                     -----------------------------------
+                     final List<GeneratedStep> generatedSteps = [
+                       GeneratedStep(
+                         RegExp(..., caseSensitive: false),
+                         stepFunction,
+                         ['email']
+                       ),
+                       ...
+                     ]
+
+
+                            (package: gherkin_patrol)
++----------------------------------------------------------------------------+
+| lib/src/annotations.dart                                                   |
+|   @Given/@When/@Then/@And/@But/@Step                                       |
+|                                                                            |
+| lib/src/builder/step_generator.dart                                        |
+|   - scans annotated step functions                                         |
+|   - validates signature: Future<void> Function(PatrolTester $, StepMatch)  |
+|   - compiles placeholders: "{email}" -> "(.+?)"                            |
+|   - supports raw regex via '^REGEX:' prefix                                |
+|   - emits *.bdd.g.dart                                                     |
+|                                                                            |
+| lib/src/builder/step_builder.dart                                          |
+|   - PartBuilder wiring (build.yaml)                                        |
+|                                                                            |
+| lib/src/types.dart                                                         |
+|   StepFn typedef                                                           |
+|   StepMatch                                                                |
+|   GeneratedStep                                                            |
+|   combineSteps([...]) -> List<GeneratedStep>                               |
+|                                                                            |
+| lib/src/runner.dart                                                        |
+|   runFeatureFile(path, $, List<GeneratedStep>)                             |
+|   runFeatureContent(content, $, List<GeneratedStep>)                       |
+|   - reads feature lines                                                    |
+|   - strips Given/When/Then/And/But prefix                                  |
+|   - iterates over steps                                                    |
+|   - first matching step wins                                               |
+|   - maps capture groups -> named args                                      |
+|   - calls step.fn($, StepMatch)                                            |
+|                                                                            |
+| build.yaml                                                                 |
+|   auto_apply: dependents                                                   |
++----------------------------------------------------------------------------+
+```
+
 ### Build-time
 
 1. You annotate top-level step functions.
