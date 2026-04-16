@@ -155,7 +155,7 @@ Using a pinned commit is recommended for reproducible builds:
 dependencies:
   gherkin_patrol:
     git:
-      url: git@github.com:your-org/gherkin_patrol.git
+      url: https://github.com/dexterBEN/gherkin_patrol.git
       ref: <commit-or-tag>
   patrol_finders: ^3.0.0
 
@@ -171,6 +171,7 @@ dependencies:
     git:
       url: https://github.com/dexterBEN/gherkin_patrol.git
       ref: main
+  patrol_finders: ^3.0.0
 ```
 
 or
@@ -179,8 +180,9 @@ or
 dependencies:
   gherkin_patrol:
     git:
-      url: git@github.com:your-org/gherkin_patrol.git
+      url: https://github.com/dexterBEN/gherkin_patrol.git
       ref: v0.1.0
+  patrol_finders: ^3.0.0
 ```
 
 Don't forget to add:
