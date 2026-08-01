@@ -1,5 +1,6 @@
-import 'dart:io';
 import 'package:patrol_finders/patrol_finders.dart';
+
+import 'feature_file.dart';
 import 'types.dart';
 
 final _stepPrefix =
@@ -11,7 +12,7 @@ Future<void> runFeatureFile(
   PatrolTester $,
   List<GeneratedStep> steps,
 ) async {
-  final content = await File(path).readAsString();
+  final content = await FeatureFile(path).read();
   await runFeatureContent(content, $, steps);
 }
 
